@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <meta name="description" content="Медиаподборка — поиск и проверка публикаций по выбранному региону.">
+  <title>Медиаподборка · Медиамониторинг</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <script src="{{ url_for('static', filename='preferences.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='search-upgrade.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+<svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-sources" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.6 7.4M3 4v7h7M12 7v5l3 2"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1.5.8-1.5 1.5-1.5 2.5M12 16.8v.2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M13 4h7v7m0-7L10 14M10 4H4v16h16v-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v6h5M8 13h8m-8 4h6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="m16 3 5 5-12 12H4v-5L16 3Zm-2 2 5 5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+</svg>
+<a class="skip-link" href="#main">К содержимому</a>
+<aside class="sidebar">
+  <a class="brand" href="#search" aria-label="Медиаподборка — главная">
+    <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span>Медиа<span class="brand-second">подборка</span></span>
+  </a>
+  <div class="workspace"><span class="workspace-symbol">МП</span><div><strong id="workspace-region">Красноярский край</strong><small>Рабочее пространство</small></div></div>
+  <nav aria-label="Основная навигация">
+    <a class="nav-item active" href="#search" data-view="search" aria-label="Поиск публикаций" title="Поиск публикаций"><svg><use href="#i-search"/></svg><span>Поиск публикаций</span></a>
+    <a class="nav-item" href="#sources" data-view="sources" aria-label="Мои источники" title="Мои источники"><svg><use href="#i-sources"/></svg><span>Мои источники</span><span id="source-count" class="nav-count">0</span></a>
+    <a class="nav-item" href="#history" data-view="history" aria-label="История поисков" title="История поисков"><svg><use href="#i-history"/></svg><span>История поисков</span></a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a class="nav-item" href="#help" data-view="help" aria-label="Как это работает" title="Как это работает"><svg><use href="#i-help"/></svg><span>Как это работает</span></a>
+    <div class="agency"><span class="agency-line"></span><p>Агентство печати<br>и массовых коммуникаций</p><small>Красноярского края</small></div>
+  </div>
+</aside>
+<div class="app-shell">
+  <header class="topbar"><div class="breadcrumb">Рабочее пространство <span>/</span> <strong id="breadcrumb-title">Поиск публикаций</strong></div><div class="appearance-controls" aria-label="Настройки отображения"><label for="theme-select">Тема</label><select id="theme-select"><option value="system">Системная</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select><button id="scale-down" type="button" aria-label="Уменьшить масштаб">A−</button><output id="scale-value" aria-live="polite">100%</output><button id="scale-up" type="button" aria-label="Увеличить масштаб">A+</button></div></header>
+  <main id="main" tabindex="-1">
+    <section id="view-search" class="view">
+      <div class="page-heading"><div><h1>Поиск публикаций</h1><p>Найдите главное. Сохраните источники. Соберите подборку.</p></div><button type="button" class="button secondary compact" id="new-search"><svg><use href="#i-plus"/></svg>Новый поиск</button></div>
+      <form id="search-form" class="search-panel">
+        <div class="form-topline"><div class="segmented" role="group" aria-label="Тип запроса"><button class="selected" type="button" data-query-type="topic" aria-pressed="true">Поиск по тезису</button><button type="button" data-query-type="article" aria-pressed="false">Сравнение с оригиналом</button></div><span class="quiet-caption" id="mode-caption">Ключевые слова и смысл</span></div>
+        <label class="sr-only" for="query">Что ищем?</label>
+        <div class="query-wrap"><svg><use href="#i-search"/></svg><textarea id="query" name="query" rows="2" required minlength="3" maxlength="12000" placeholder="О чём найти публикации?"></textarea><span class="query-shortcut" aria-hidden="true">Ctrl ↵</span></div>
+        <div class="examples"><span>Например:</span><button type="button" data-example="пожарная безопасность">Пожарная безопасность</button><button type="button" data-example="новая школа">Новые школы</button><button type="button" data-example="развитие туризма">Развитие туризма</button></div>
+        <p class="hint" id="mode-hint">Слова могут стоять в разных частях новости. Проверяем смысл по оригиналу. Для точной фразы используйте кавычки.</p><div class="filters-grid">
+          <fieldset class="date-field"><legend>Период публикаций</legend><div class="date-range"><label class="sr-only" for="date-from">Дата начала</label><input id="date-from" type="date" required><span>—</span><label class="sr-only" for="date-to">Дата окончания</label><input id="date-to" type="date" required></div><div class="date-presets"><button type="button" data-days="7">7 дней</button><button class="active" type="button" data-days="30">30 дней</button><button type="button" data-days="90">90 дней</button></div></fieldset>
+          <fieldset class="platform-field"><legend>Где искать</legend><div class="platforms"><label><input type="checkbox" name="platform" value="vk" checked><span class="platform-dot vk">VK</span>ВКонтакте</label><label><input type="checkbox" name="platform" value="ok" checked><span class="platform-dot ok">ОК</span>Одноклассники</label><label><input type="checkbox" name="platform" value="max" checked><span class="platform-dot max">М</span>MAX</label><label><input type="checkbox" name="platform" value="web" checked><svg><use href="#i-file"/></svg>Сайты и СМИ</label></div></fieldset>
+        </div>
+        <div class="search-bottom"><div class="mode-control"><label for="search-mode">Область поиска</label><select id="search-mode"><option value="extended">Расширенный поиск</option><option value="sources">По моим источникам</option></select></div><label class="region-field" for="region">Регион<input id="region" value="Красноярский край" maxlength="80" list="region-list" aria-describedby="region-hint"></label><label class="region-field" for="city">Город <small>необязательно</small><input id="city" maxlength="100" list="city-list" placeholder="Весь регион"></label><datalist id="region-list"></datalist><datalist id="city-list"></datalist><button class="button primary" id="submit-search" type="submit"><svg><use href="#i-search"/></svg>Найти публикации<svg><use href="#i-arrow"/></svg></button></div>
+        <div class="extra-filters"><label class="fresh-control"><input id="fresh-only" type="checkbox">Свежее <span>за последние 24 часа</span></label><label for="result-limit">Количество записей <input id="result-limit" type="number" min="1" max="100" step="1" value="20" list="limit-options" required></label><datalist id="limit-options"><option value="10"><option value="20"><option value="50"><option value="100"></datalist></div><p id="region-hint" class="hint" aria-live="polite">Регион: Красноярский край.</p><div id="source-picker" hidden><div class="picker-heading"><strong>Выберите источники</strong><a href="#sources">Управление источниками</a></div><div id="source-options"></div></div>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+      </form>
+      <div class="coverage-note"><svg><use href="#i-help"/></svg><span>Поиск по открытым публикациям. Охват зависит от индекса Яндекса и доступности оригиналов.</span></div>
+      <section class="results-section" aria-labelledby="results-heading">
+        <div class="results-heading"><div><h2 id="results-heading">Подборка публикаций <span id="results-count" class="count-badge">0</span></h2><p id="results-subtitle">Результаты появятся здесь после поиска</p></div><button class="button secondary" id="export-button" type="button" disabled><svg><use href="#i-download"/></svg>Скачать Excel<span id="export-count"></span></button></div>
+        <div id="run-context" class="run-context" hidden></div>
+        <div id="job-progress" class="job-progress" role="status" hidden><span class="spinner"></span><div><strong id="progress-label">Ищем публикации</strong><p id="progress-detail">Можно оставаться на странице или вернуться позже.</p></div></div>
+        <div id="job-warnings" class="notice warning" hidden></div>
+        <section id="comparison-panel" class="comparison-panel" aria-label="Сравнение с оригиналом" hidden></section><div id="results-toolbar" class="results-toolbar" hidden><div class="result-tabs" role="group" aria-label="Отбор публикаций"><button class="active" data-filter="all" type="button">Все <span>0</span></button><button data-filter="relevant" type="button">Связанные <span>0</span></button><button data-filter="indirect" type="button">Косвенно <span>0</span></button><button data-filter="review" type="button">Неоднозначное <span>0</span></button><button data-filter="included" type="button">Выбранные <span>0</span></button></div><label class="results-filter"><svg><use href="#i-search"/></svg><input id="filter-text" placeholder="Найти в подборке" aria-label="Найти в подборке"></label></div>
+        <div id="results-body"><div class="empty-state"><div class="empty-symbol"><svg><use href="#i-search"/></svg></div><h3>Всё начинается с запроса</h3><p>Укажите тему или вставьте текст новости.<br>Мы найдём публикации и поможем проверить их связь с запросом.</p><div class="empty-steps"><span><svg><use href="#i-search"/></svg>Поиск</span><svg><use href="#i-arrow"/></svg><span><svg><use href="#i-check"/></svg>Проверка</span><svg><use href="#i-arrow"/></svg><span><svg><use href="#i-download"/></svg>Подборка в Excel</span></div></div></div>
+        <details id="coverage-details" hidden><summary>Что проверено и какие есть ограничения</summary><div id="coverage-content"></div></details>
+      </section>
+    </section>
+    <section id="view-sources" class="view" hidden>
+      <div class="page-heading"><div><h1>Мои источники</h1><p>Соберите список групп, каналов и сайтов для регулярного поиска.</p></div><button class="button primary" id="add-source" type="button"><svg><use href="#i-plus"/></svg>Добавить источник</button></div>
+      <form id="source-form" class="source-form" hidden><h2 id="source-form-title">Новый источник</h2><input type="hidden" id="source-id"><div class="source-form-grid"><label>Название<input id="source-name" maxlength="100" placeholder="Например, городская редакция" required></label><label>Ссылка на группу, канал или сайт<input id="source-url" type="url" maxlength="220" placeholder="https://vk.com/club123456" required></label><label>Регион<input id="source-region" value="Красноярский край" maxlength="80" required></label></div><p class="hint">Площадка определяется по ссылке. Для VK предпочтительна ссылка club/public с числовым ID: она позволяет точно проверить принадлежность поста.</p><p id="source-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button class="button primary" type="submit">Сохранить источник</button><button class="button secondary" id="cancel-source" type="button">Отмена</button></div></form>
+      <div id="sources-list"></div>
+      <div class="info-block"><svg><use href="#i-help"/></svg><div><strong>Ваш список — точнее область поиска</strong><p>Выберите «По моим источникам» на главном экране, чтобы искать только в этом списке. Расширенный поиск находит публикации и за его пределами.</p></div></div>
+    </section>
+    <section id="view-history" class="view" hidden><div class="page-heading"><div><h1>История поисков</h1><p>Условия и результаты каждого запуска сохраняются отдельно.</p></div><a href="#search" class="button primary"><svg><use href="#i-plus"/></svg>Перейти к поиску</a></div><div id="history-list"></div></section>
+    <section id="view-help" class="view" hidden><div class="page-heading"><div><h1>От запроса до подборки</h1><p>Как работать с публикациями и проверять результат.</p></div></div><div class="help-layout"><article class="help-content"><h2>Задайте условия</h2><p>В режиме «Поиск по тезису» введите ключевые слова: например, «Аделинчики Саратов». Они могут стоять в разных частях текста; связь между ними проверяется по содержанию. Для непрерывной точной фразы заключите её в кавычки. В режиме «Сравнение с оригиналом» вставьте текст или публичную ссылку: увидите эталон, его краткое изложение и материалы о другом событии на ту же тему. Выберите период, регион и при необходимости город.</p><h2>Определите область поиска</h2><p>Расширенный поиск использует индекс Яндекса и не ограничивается вашим списком. Режим «По моим источникам» ищет только по выбранным адресам. В обоих случаях закрытые, неиндексируемые и динамические страницы могут быть недоступны.</p><h2>Проверьте оригиналы</h2><p>Нажмите на публикацию, чтобы увидеть сохранённый текст, объяснение отбора и цитату. Модель сопоставляет содержание с запросом и регионом. Эмоция, стиль и объяснения отображаются рядом с результатом. Это анализ текста, а не независимая проверка истинности утверждений.</p><div class="status-explanation"><span class="badge relevant">Связанные</span><p>Получен текст, модель установила связь и привела проверяемую цитату. Если дата неизвестна, это отмечено отдельно; такой материал не выбирается автоматически.</p><span class="badge review">Неоднозначное</span><p>Оригинал недоступен или есть сомнения в связи с запросом. Ссылки соцсетей с недоступным оригиналом показаны в общей подборке с соответствующей пометкой. Такие материалы не выбираются автоматически.</p><span class="badge indirect">Косвенно</span><p>Ключевые слова найдены, но тема затронута лишь косвенно. Материалы без совпадения или вне периода отбрасываются.</p></div><h2>Соберите файл</h2><p>Отметьте нужные публикации и нажмите «Скачать Excel». Выгружаются все отмеченные записи текущего запуска, в том числе скрытые текстовым фильтром. Неоднозначные материалы сохраняют свои отметки в файле. Второй лист содержит условия поиска и ограничения.</p><h2>Как считаются размещения</h2><p>Одинаковая новость в трёх источниках — три размещения. Повтор одной нормализованной ссылки не увеличивает счётчик. Тексты сохраняются на момент получения и не заменяются пересказом модели.</p></article><aside class="help-aside"><h3>Подключение сервисов</h3><div id="service-status"></div><p>Настройку выполняет разработчик в файле .env на сервере. Секретные ключи не передаются в браузер.</p><h3>Ваше пространство</h3><p>История и источники связаны с этим браузером. После очистки cookies или перехода на другое устройство доступ к прежнему пространству не сохраняется.</p><h3>Границы поиска</h3><p id="limits-text"></p><p>Доступ к API VK, ОК и MAX напрямую не подключён: обнаружение идёт через Яндекс, чтение — через публичные страницы. Полнота покрытия не гарантируется.</p></aside></div></section>
+    <footer class="app-footer"><span>Медиаподборка</span><span>От информации — к проверяемому результату</span></footer>
+  </main>
+</div>
+<dialog id="publication-dialog" aria-labelledby="detail-title"><div class="dialog-top"><span>Публикация</span><button class="icon-button" type="button" id="close-detail" aria-label="Закрыть подробности"><svg><use href="#i-close"/></svg></button></div><div id="publication-detail"></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<noscript><div class="noscript">Для поиска и проверки публикаций включите JavaScript в браузере.</div></noscript>
+</body>
+</html>
