@@ -1,0 +1,49 @@
+{
+  "state": "partial",
+  "warnings": [
+    "Обработка ограничена 4 кандидатами; это не полный охват интернета.",
+    "Не все оригиналы удалось получить. Недоступные материалы вынесены на проверку."
+  ],
+  "publications": [
+    {
+      "title": "Путин одобрил проект «Площади первых» и благоустройство набережной в Красноярске",
+      "url": "https://kras.mk.ru/social/2025/06/17/putin-odobril-proekt-ploshhadi-pervykh-i-blagoustroystvo-naberezhnoy-v-krasnoyarske.html",
+      "fetch_status": "received",
+      "fetch_note": "",
+      "published_at": "2025-06-17",
+      "relevance": "relevant",
+      "reason": "В тексте говорится о благоустройстве набережной реки Енисей в Красноярске.",
+      "included": 1
+    },
+    {
+      "title": "В Красноярске утвердили концепции благоустройства скверов...",
+      "url": "https://www.admkrsk.ru/press/news/Pages/000/news.aspx?RecordID=27251",
+      "fetch_status": "unavailable",
+      "fetch_note": "Полный текст публикации не выделен. Возможны авторизация или динамическая страница.",
+      "published_at": null,
+      "relevance": "review",
+      "reason": "Оригинал не получен. Сниппет поиска не подтверждает содержание публикации.",
+      "included": 0
+    },
+    {
+      "title": "В Красноярске благоустроят участок Центральной набережной",
+      "url": "https://gorodprima.ru/2025/11/18/v-krasnoyarske-preobrazyat-uchastok-tsentralnoj-naberezhnoj",
+      "fetch_status": "unavailable",
+      "fetch_note": "Слишком много переадресаций.",
+      "published_at": null,
+      "relevance": "review",
+      "reason": "Оригинал не получен. Сниппет поиска не подтверждает содержание публикации.",
+      "included": 0
+    },
+    {
+      "title": "Набережную за ДК 1 Мая в Красноярске удлинят до Октябрьского...",
+      "url": "https://dela.ru/lenta/297065",
+      "fetch_status": "unavailable",
+      "fetch_note": "Полный текст публикации не выделен. Возможны авторизация или динамическая страница.",
+      "published_at": null,
+      "relevance": "review",
+      "reason": "Оригинал не получен. Сниппет поиска не подтверждает содержание публикации.",
+      "included": 0
+    }
+  ]
+}
