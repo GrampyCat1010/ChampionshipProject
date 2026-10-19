@@ -11,14 +11,14 @@ from mediapodborka.jobs import run_search
 def main():
     artifacts = Path(__file__).resolve().parents[1] / 'artifacts'
     artifacts.mkdir(exist_ok=True)
-    app = create_app({'TESTING': True, 'DATABASE': str(artifacts / 'live-smoke.sqlite3'), 'MAX_CANDIDATES': 4, 'SEARCH_PAGES': 1})
+    app = create_app({'TESTING': True, 'DATABASE': str(artifacts / 'live-smoke.sqlite3'), 'MAX_CANDIDATES': 4, 'HARD_CANDIDATE_LIMIT': 4, 'SEARCH_PAGES': 1})
     app.extensions['jobs'].submit = lambda _: True
     client = app.test_client()
     client.get('/')
     with client.session_transaction() as session:
         token = session['csrf']
-    payload = {'query': 'благоустройство набережной Енисея', 'query_type': 'topic', 'region': 'Красноярск',
-               'date_from': '2025-01-01', 'date_to': '2025-12-31', 'mode': 'extended', 'platforms': ['web'], 'source_ids': []}
+    payload = {'query': 'набережная', 'query_type': 'topic', 'region': 'Красноярский край',
+               'date_from': '2025-01-01', 'date_to': '2025-12-31', 'mode': 'by_thesis', 'scope': 'extended', 'limit': 4, 'platforms': ['web'], 'source_ids': []}
     response = client.post('/api/searches', json=payload, headers={'X-CSRF-Token': token})
     assert response.status_code == 202, response.json
     sid = response.json['id']

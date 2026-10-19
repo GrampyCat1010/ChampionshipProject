@@ -13,7 +13,9 @@ from bs4 import BeautifulSoup
 import certifi
 
 MAX_BYTES = 2_000_000
-DOMAINS = {'vk': ('vk.com', 'vk.ru'), 'ok': ('ok.ru',), 'max': ('max.ru',)}
+USER_AGENT = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+              '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 MediaPodborka/1.0')
+DOMAINS = {'vk': ('vk.com', 'vk.ru', 'vkvideo.ru'), 'ok': ('ok.ru',), 'max': ('max.ru',)}
 
 
 def platform_for(url):
@@ -90,7 +92,7 @@ def fetch_html(url):
                 sock = context.wrap_socket(sock, server_hostname=parts.hostname)
             conn.sock = sock
             target = urlunsplit(('', '', parts.path or '/', parts.query, ''))
-            conn.request('GET', target, headers={'User-Agent': 'MediaPodborka/1.0 (+public-media-monitoring)', 'Accept': 'text/html', 'Accept-Encoding': 'identity'})
+            conn.request('GET', target, headers={'User-Agent': USER_AGENT, 'Accept': 'text/html', 'Accept-Encoding': 'identity', 'Accept-Language': 'ru,en;q=0.8'})
             response = conn.getresponse()
             if response.status in (301, 302, 303, 307, 308):
                 location = response.getheader('Location')
@@ -121,7 +123,9 @@ def parse_date(value):
     if not isinstance(value, str):
         return None
     try:
-        return datetime.fromisoformat(value.strip().replace('Z', '+00:00')).date().isoformat()
+        value = value.strip().replace('Z', '+00:00')
+        parsed = datetime.fromisoformat(value)
+        return parsed.date().isoformat() if len(value) == 10 else parsed.isoformat()
     except (ValueError, TypeError):
         return None
 
@@ -170,17 +174,48 @@ def extract(html, url):
             published = datetime.strptime(local_date.get_text(strip=True), '%d.%m.%Y').date().isoformat()
         except ValueError:
             pass
-    for el in soup.select('script, style, nav, footer, header, noscript, form, aside'):
+    # ASP.NET publishers wrap the whole document in a form (e.g. dela.ru).
+    # Removing that form destroys the article. Remove form controls, not wrappers.
+    for el in soup.select('script, style, nav, footer, noscript, aside, input, button, select, textarea'):
         el.decompose()
-    selectors = ('[itemprop="articleBody"]', '.wall_post_text', '.media-text_cnt', '.post-text', '.js-mediator-article', '.article__body', '.article-body', '.article-content', '.entry-content', '.news-text', '.news__text', '.wcol.article', 'article', '.news-detail')
-    article = next((node for selector in selectors if (node := soup.select_one(selector)) is not None), None)
-    text = max(bodies, key=len) if bodies else article.get_text('\n', strip=True) if article else ''
+    # Explicit publisher body containers outrank generic <article> cards.
+    # A page can have many articles: selecting the first can read a recommendation.
+    selectors = ('.journal-detail-page__main-content', '#samcontentonly', '[itemprop="articleBody"]',
+                 '.wall_post_text', '.media-text_cnt', '.post-text', '.js-mediator-article',
+                 '.article__body', '.article-body', '.article-content', '.entry-content',
+                 '.news-text', '.news__text', '.wcol.article', '.news-detail')
+    article = None
+    for selector in selectors:
+        nodes = [node for node in soup.select(selector) if len(node.get_text(' ', strip=True)) >= 100]
+        if nodes:
+            article = max(nodes, key=lambda node: len(node.get_text(' ', strip=True)))
+            break
+    if article is None:
+        nodes = [node for node in soup.select('main article, article') if len(node.get_text(' ', strip=True)) >= 100]
+        if nodes:
+            article = max(nodes, key=lambda node: len(node.get_text(' ', strip=True)))
+    # Real article text outranks unrelated JSON-LD recommendation snippets.
+    text = article.get_text('\n', strip=True) if article else max(bodies, key=len) if bodies else ''
     # Never promote an og:description, a search snippet, or a generic login page to an original.
-    if len(text.strip()) < 100:
+    platform = platform_for(url)
+    if platform == 'max':
+        # A channel landing page describes the channel, not a publication. Only
+        # a direct /channel/post link has this public message container.
+        path = urlsplit(url).path.strip('/').split('/')
+        message = soup.select_one('.card .info .description') if len(path) == 2 else None
+        if not message:
+            raise ValueError('Это страница канала MAX без текста отдельного поста. Нужна прямая ссылка на публикацию.')
+        text = message.get_text('\n', strip=True)
+        title = text.split('\n', 1)[0][:200]
+    if len(text.strip()) < (30 if platform != 'web' else 100):
+        if platform == 'vk':
+            raise ValueError('VK не отдал текст поста в публичном HTML (динамическая страница или требуется вход). Ссылка из индекса сохранена для ручного открытия.')
         raise ValueError('Полный текст публикации не выделен. Возможны авторизация или динамическая страница.')
     if re.search(r'captcha|access denied|проверка браузера|подтвердите.{0,20}не робот', title, re.I):
         raise ValueError('Источник показывает страницу проверки доступа.')
-    text = re.sub(r'\n{3,}', '\n\n', text).strip()[:60000]
+    text = re.sub(r'\n{3,}', '\n\n', text).strip()
+    if len(text) > 60000:
+        raise ValueError('Текст превышает 60 000 символов. Вставьте нужный фрагмент; оригинал не будет молча обрезан.')
     return {'title': title[:500] or text[:100], 'original_text': text, 'published_at': published,
             'source': meta('og:site_name')[:200] or urlsplit(url).hostname,
             'content_hash': hashlib.sha256(re.sub(r'\s+', ' ', text).encode()).hexdigest()}

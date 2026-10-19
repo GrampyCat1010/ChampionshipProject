@@ -26,6 +26,6 @@ def headers(client):
 
 @pytest.fixture
 def search_payload():
-    return {'query': 'Реконструкция набережной Енисея', 'query_type': 'topic', 'region': 'Красноярский край',
+    return {'query': 'набережная Енисея', 'query_type': 'topic', 'region': 'Красноярский край',
             'date_from': '2026-10-01', 'date_to': '2026-10-19', 'mode': 'extended',
             'platforms': ['vk', 'ok', 'max', 'web'], 'source_ids': []}

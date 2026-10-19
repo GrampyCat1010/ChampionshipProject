@@ -84,14 +84,17 @@ def test_pipeline_dedup_and_export_selection(app, client, headers, search_payloa
     assert other.get(f'/api/searches/{sid}/export').status_code == 404
 
 
-@pytest.mark.parametrize('published, expected', [(None, 'review'), ('2026-09-01', 'irrelevant')])
+@pytest.mark.parametrize('published, expected', [(None, 'relevant'), ('2026-09-01', 'irrelevant')])
 def test_unknown_and_outside_dates_not_included(app, client, headers, search_payload, monkeypatch, published, expected):
     configure_pipeline(monkeypatch, [{'url': 'https://news.example.com/a', 'title': 'Статья', 'snippet': ''}], {'published_at': published})
     sid = start(client, headers, search_payload)
     run_search(app.config, sid)
-    p = client.get('/api/searches/' + sid).json['publications'][0]
-    assert p['relevance'] == expected
-    assert p['included'] == 0
+    pubs = client.get('/api/searches/' + sid).json['publications']
+    if published:
+        assert pubs == []  # Out-of-period publications are now excluded completely.
+    else:
+        assert pubs[0]['relevance'] == expected
+        assert pubs[0]['included'] == 0
     assert client.get(f'/api/searches/{sid}/export').status_code == 400
 
 
@@ -104,9 +107,7 @@ def test_unavailable_original_and_model_failure(app, client, headers, search_pay
     run_search(app.config, sid)
     result = client.get('/api/searches/' + sid).json
     assert result['search']['state'] == 'partial'
-    p = result['publications'][0]
-    assert p['original_text'] == '' and p['included'] == 0
-    assert p['snippet'] == 'Это только сниппет'
+    assert result['publications'] == []  # A snippet cannot establish an exact match.
 
 
 def test_empty_vs_failed_search(app, client, headers, search_payload, monkeypatch):
@@ -154,10 +155,10 @@ def test_analysis_evidence_must_exist():
 def test_original_extraction_and_login_rejection():
     html = f'<html><head><title>Новость</title><meta property="article:published_time" content="2026-10-12T10:00:00+07:00"></head><body><article>{TEXT}</article></body></html>'
     result = extract(html, 'https://example.com/article')
-    assert result['published_at'] == '2026-10-12'
+    assert result['published_at'] == '2026-10-12T10:00:00+07:00'
     assert result['original_text'] == TEXT
     structured = f'<meta itemprop="datePublished" content="2025-12-19T10:16:00+07:00"><div class="wcol article">{TEXT}</div>'
-    assert extract(structured, 'https://example.com/news')['published_at'] == '2025-12-19'
+    assert extract(structured, 'https://example.com/news')['published_at'] == '2025-12-19T10:16:00+07:00'
     local = f'<div class="di3-meta__date">23.04.2025</div><article><div class="js-mediator-article">{TEXT}</div>Footer unrelated</article>'
     extracted = extract(local, 'https://example.com/article')
     assert extracted['published_at'] == '2025-04-23'

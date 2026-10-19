@@ -6,3 +6,5 @@ openpyxl==3.1.5
 python-dotenv==1.2.4
 waitress==3.0.2
 certifi==2026.10.18
+pymorphy3==2.0.6
+pymorphy3-dicts-ru==2.4.417150.4580142

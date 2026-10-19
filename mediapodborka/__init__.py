@@ -16,6 +16,9 @@ from werkzeug.exceptions import HTTPException
 from .content import normalize_url, platform_for
 from .db import connect, initialize, now
 from .jobs import JobRunner
+from .locations import DEFAULT_REGION, registry, validate_location
+from .filters import fresh_at, result_groups
+from .matching import TOKEN
 
 ROOT = Path(__file__).resolve().parent.parent
 PLATFORMS = {'vk': 'ВКонтакте', 'ok': 'Одноклассники', 'max': 'MAX', 'web': 'Сайты и СМИ'}
@@ -44,7 +47,7 @@ def create_app(test_config=None):
         YANDEX_CLOUD_API_KEY=os.getenv('YANDEX_CLOUD_API_KEY', ''),
         YANDEX_CLOUD_MODEL=os.getenv('YANDEX_CLOUD_MODEL', 'yandexgpt-5-pro/latest'),
         YANDEX_SEARCH_API_KEY=os.getenv('YANDEX_SEARCH_API_KEY', ''),
-        MAX_CANDIDATES=max(1, min(int(os.getenv('MAX_CANDIDATES', '30')), 100)),
+        MAX_CANDIDATES=max(1, min(int(os.getenv('MAX_CANDIDATES', '300')), 500)),
         SEARCH_PAGES=max(1, min(int(os.getenv('SEARCH_PAGES', '1')), 3)),
     )
     if test_config:
@@ -107,8 +110,11 @@ def create_app(test_config=None):
             abort(404, 'Поиск не найден в этой сессии.')
         result = dict(row)
         result.pop('owner')
-        for field in ('platforms', 'sources', 'warnings', 'coverage'):
+        for field in ('platforms', 'sources', 'warnings', 'coverage', 'diagnostics'):
             result[field] = json.loads(result[field])
+        result['reference'] = json.loads(result['reference'])
+        result['limit'] = result['result_limit']
+        result['fresh_only'] = bool(result['fresh_only'])
         return result
 
     @app.get('/')
@@ -120,7 +126,11 @@ def create_app(test_config=None):
         return jsonify(search_configured=bool((app.config['YANDEX_SEARCH_API_KEY'] or app.config['YANDEX_CLOUD_API_KEY']) and app.config['YANDEX_CLOUD_FOLDER']),
                        ai_configured=bool(app.config['YANDEX_CLOUD_API_KEY'] and app.config['YANDEX_CLOUD_FOLDER']),
                        max_candidates=app.config['MAX_CANDIDATES'], search_pages=app.config['SEARCH_PAGES'],
-                       region='Красноярский край')
+                       max_results=100, region=DEFAULT_REGION)
+
+    @app.get('/api/locations')
+    def locations():
+        return jsonify(locations=registry())
 
     @app.get('/api/sources')
     def sources():
@@ -160,7 +170,16 @@ def create_app(test_config=None):
 
     def start_search(data):
         query = text_field(data, 'query', minimum=3, maximum=12000)
-        region = text_field(data, 'region', maximum=80)
+        raw_region = text_field({**data, 'region': data.get('region', '')}, 'region', minimum=0, maximum=80)
+        region = raw_region or DEFAULT_REGION
+        city = text_field({**data, 'city': data.get('city', '')}, 'city', minimum=0, maximum=100)
+        region, city = validate_location(region, city)
+        fresh_only = data.get('fresh_only', False)
+        result_limit = data.get('limit', 20)
+        if type(fresh_only) is not bool:
+            abort(400, 'Поле «Свежее» должно быть логическим значением.')
+        if type(result_limit) is not int or not 1 <= result_limit <= 100:
+            abort(400, 'Количество записей должно быть целым числом от 1 до 100.')
         date_from, date_to = text_field(data, 'date_from', maximum=10), text_field(data, 'date_to', maximum=10)
         try:
             start, end = date.fromisoformat(date_from), date.fromisoformat(date_to)
@@ -175,29 +194,43 @@ def create_app(test_config=None):
         if not isinstance(platforms, list) or not platforms or any(not isinstance(p, str) or p not in PLATFORMS for p in platforms) or len(platforms) > 4:
             abort(400, 'Выберите хотя бы одну площадку.')
         platforms = list(dict.fromkeys(platforms))
-        mode, query_type = data.get('mode'), data.get('query_type')
-        if mode not in ('extended', 'sources') or query_type not in ('topic', 'article'):
+        mode, query_type = data.get('mode', 'by_thesis'), data.get('query_type', 'topic')
+        scope = data.get('scope', 'extended')
+        # Compatibility with saved clients: old mode was source scope.
+        if mode in ('extended', 'sources'):
+            scope, mode = mode, 'compare' if query_type == 'article' else 'by_thesis'
+        if mode not in ('by_thesis', 'compare') or scope not in ('extended', 'sources') or query_type not in ('topic', 'article'):
             abort(400, 'Некорректный режим поиска.')
+        query_type = 'article' if mode == 'compare' else 'topic'
+        if mode == 'by_thesis':
+            if len(query) > 200 or not TOKEN.search(query):
+                abort(400, 'Введите поисковый запрос до 200 символов. Для полного текста новости выберите сравнение.')
+        elif query.startswith(('http://', 'https://')):
+            normalize_url(query)
         source_ids = data.get('source_ids', [])
         if not isinstance(source_ids, list) or len(source_ids) > 20 or any(not isinstance(s, str) for s in source_ids):
             abort(400, 'Выберите не больше 20 источников за один запуск.')
         with connect(app.config['DATABASE']) as db:
             source_rows = db.execute('SELECT id,name,url,platform,region FROM sources WHERE owner=?', (session['owner'],)).fetchall()
             selected = [dict(s) for s in source_rows if s['id'] in source_ids and s['platform'] in platforms]
-            if mode == 'sources' and not selected:
+            if scope == 'sources' and not selected:
                 abort(400, 'Добавьте и выберите источники для выбранных площадок.')
-            if mode == 'sources' and len(selected) != len(set(source_ids)):
+            if scope == 'sources' and len(selected) != len(set(source_ids)):
                 abort(400, 'Некоторые источники недоступны или не соответствуют выбранным площадкам.')
             active = db.execute("SELECT COUNT(*) FROM searches WHERE owner=? AND state IN ('queued','running')", (session['owner'],)).fetchone()[0]
             if active >= 2:
                 abort(429, 'Дождитесь завершения текущих поисков.')
             since = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
             recent = db.execute('SELECT COUNT(*) FROM searches WHERE owner=? AND created_at>?', (session['owner'], since)).fetchone()[0]
-            if recent >= 20:
-                abort(429, 'Лимит 20 поисков в час достигнут. Повторите позже.')
+            if recent >= 999:
+                abort(429, 'Лимит 999 поисков в час достигнут. Повторите позже.')
             search_id = uuid.uuid4().hex
-            db.execute('INSERT INTO searches (id,owner,query,query_type,date_from,date_to,region,mode,platforms,sources,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                       (search_id, session['owner'], query, query_type, date_from, date_to, region, mode, json.dumps(platforms), json.dumps(selected, ensure_ascii=False), now()))
+            db.execute('''INSERT INTO searches
+                (id,owner,query,query_type,date_from,date_to,region,mode,platforms,sources,created_at,
+                 scope,city,fresh_only,result_limit,region_defaulted) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                (search_id, session['owner'], query, query_type, date_from, date_to, region, mode,
+                 json.dumps(platforms), json.dumps(selected, ensure_ascii=False), now(), scope, city,
+                 int(fresh_only), result_limit, int(not raw_region)))
         if not runner.submit(search_id):
             with connect(app.config['DATABASE']) as db:
                 db.execute("UPDATE searches SET state='failed', stage='Очередь заполнена', warnings=? WHERE id=?", (json.dumps(['Сервис занят. Повторите поиск позже.'], ensure_ascii=False), search_id))
@@ -208,13 +241,21 @@ def create_app(test_config=None):
     def create_search():
         return jsonify(id=start_search(body())), 202
 
+    @app.post('/api/searches/<search_id>/repeat')
+    def repeat_search(search_id):
+        search = owned_search(search_id)
+        search['source_ids'] = [source['id'] for source in search['sources']]
+        return jsonify(id=start_search(search)), 202
+
     @app.get('/api/searches')
     def history():
         with connect(app.config['DATABASE']) as db:
             rows = db.execute('''SELECT s.id,s.query,s.date_from,s.date_to,s.state,s.created_at,s.mode,
+                s.scope,s.region,s.city,s.fresh_only,s.result_limit AS "limit",h.results_count,
                 (SELECT COUNT(*) FROM publications p WHERE p.search_id=s.id) AS total,
                 (SELECT COUNT(*) FROM publications p WHERE p.search_id=s.id AND p.included=1) AS included
-                FROM searches s WHERE owner=? ORDER BY created_at DESC LIMIT 100''', (session['owner'],)).fetchall()
+                FROM searches s JOIN search_history h ON h.id=s.id
+                WHERE h.user_id=? ORDER BY s.created_at DESC LIMIT 100''', (session['owner'],)).fetchall()
         return jsonify(searches=[dict(row) for row in rows])
 
     @app.get('/api/searches/<search_id>')
@@ -229,7 +270,9 @@ def create_app(test_config=None):
                 hashes[pub['content_hash']] = hashes.get(pub['content_hash'], 0) + 1
         for pub in pubs:
             pub['placements'] = hashes.get(pub['content_hash'], 1)
-        return jsonify(search=search, publications=pubs)
+            pub['fresh'] = fresh_at(pub['published_at'], search['created_at'])
+        return jsonify(search=search, publications=pubs, grouped=len(pubs) > 50,
+                       groups=result_groups(pubs) if len(pubs) > 50 else [])
 
     @app.patch('/api/searches/<search_id>/publications/<publication_id>')
     def select_publication(search_id, publication_id):
@@ -255,7 +298,10 @@ def create_app(test_config=None):
         ws.title = 'Публикации'
         headers = ['№', 'Источник', 'Площадка', 'Заголовок', 'Дата публикации', 'Выдержка', 'Прямая ссылка', 'Отбор', 'Почему найдено', 'Оригинал', 'Связь с регионом', 'Получено', 'Истинность утверждений']
         ws.append(headers)
-        relevance = {'relevant': 'Подходит', 'review': 'Требует проверки', 'irrelevant': 'Не подходит'}
+        relevance = {'relevant': 'Связанные', 'indirect': 'Косвенно', 'review': 'Неоднозначное', 'irrelevant': 'Не подходит'}
+        headers.extend(['Найденные слова', 'Эмоция', 'Обоснование эмоции', 'Стиль', 'Обоснование стиля', 'Отличие от эталона'])
+        for column, header in enumerate(headers, 1):
+            ws.cell(1, column, header)
         def safe(value):
             if isinstance(value, str):
                 # Prevent spreadsheet formulas from untrusted article content.
@@ -266,7 +312,8 @@ def create_app(test_config=None):
         for i, pub in enumerate(pubs, 1):
             ws.append([safe(v) for v in [i, pub['source'], PLATFORMS[pub['platform']], pub['title'], pub['published_at'] or 'Дата неизвестна',
                 pub['evidence'] or pub['original_text'][:800] or ('Сниппет поиска: ' + pub['snippet']), pub['url'], relevance[pub['relevance']],
-                pub['reason'], 'Получен' if pub['fetch_status'] == 'received' else 'Не получен', pub['region_reason'], pub['fetched_at'], 'Независимая проверка не проводилась']])
+                pub['reason'], 'Получен' if pub['fetch_status'] == 'received' else 'Не получен', pub['region_reason'], pub['fetched_at'], 'Независимая проверка не проводилась',
+                pub['exact_match'],pub['emotion'],pub['emotion_reason'],pub['style'],pub['style_reason'],pub['difference']]])
             ws.cell(i + 1, 7).hyperlink = pub['url']
             ws.cell(i + 1, 7).style = 'Hyperlink'
         ws.freeze_panes = 'A2'
@@ -278,7 +325,9 @@ def create_app(test_config=None):
         params.append(['Параметр', 'Значение'])
         for row in [('Запрос', search['query']), ('Тип', 'Исходная новость' if search['query_type'] == 'article' else 'Тема / событие / человек'),
                     ('Период', f"{search['date_from']} — {search['date_to']}"), ('Регион', search['region']),
-                    ('Режим', 'По моим источникам' if search['mode'] == 'sources' else 'Расширенный'),
+                    ('Режим', 'Сравнение с оригиналом' if search['mode'] == 'compare' else 'Поиск по тезису'),
+                    ('Область поиска', 'По моим источникам' if search['scope'] == 'sources' else 'Расширенный'),
+                    ('Город', search['city']), ('Свежее', 'Да' if search['fresh_only'] else 'Нет'), ('Количество записей', search['limit']),
                     ('Площадки', ', '.join(PLATFORMS[p] for p in search['platforms'])),
                     ('Источники', '\n'.join(s['name'] + ': ' + s['url'] for s in search['sources']) or 'Без ограничения списком'),
                     ('Выбрано публикаций', len(pubs)), ('Состояние', STATES[search['state']]), ('Запущен', search['created_at']),
