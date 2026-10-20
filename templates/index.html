@@ -6,16 +6,22 @@
   <meta name="csrf-token" content="{{ csrf }}">
   <meta name="description" content="Медиаподборка — поиск и проверка публикаций по выбранному региону.">
   
-  <title>Медиаподборка · Медиамониторинг</title>
+  <title>ИнфоКрай · Медиамониторинг</title>
+
   
-  <!-- Иконка приложения -->
-  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-  <!-- Скрипты и стили -->
-  <script src="{{ url_for('static', filename='preferences.js') }}"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='search-upgrade.css') }}">
-  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.svg') }}" type="image/svg+xml">
+
+<!-- Скрипты и стили -->
+<script src="{{ url_for('static', filename='js/preferences.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style/app.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/search-upgrade.css') }}">
+
+<script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+
 </head>
+
 
 <body>
 
@@ -80,14 +86,12 @@
       <span class="brand-mark" aria-hidden="true">
         <span></span><span></span><span></span>
       </span>
-      <span>Медиа<span class="brand-second">подборка</span></span>
+      <span>ИнфоКрай<span class="brand-second"></span></span>
     </a>
     
     <div class="workspace">
-      <span class="workspace-symbol">МП</span>
-      <div>
-        <strong id="workspace-region">Красноярский край</strong>
-        <small>Рабочее пространство</small>
+      <div style="display: flex; justify-content: center; width: 100%; text-align: center;" >
+        <strong style="display: flex; justify-content: center; width: 100%; text-align: center;" id="workspace-region">Красноярский край</strong>
       </div>
     </div>
     
@@ -113,7 +117,7 @@
         <span>Как это работает</span>
       </a>
       <div class="agency">
-        <span class="agency-line"></span>
+        <img src="../static/imgs/logo.png" alt="#">
         <p>Агентство печати<br>и массовых коммуникаций</p>
         <small>Красноярского края</small>
       </div>
@@ -170,7 +174,7 @@
           <div class="query-wrap">
             <svg><use href="#i-search"/></svg>
             <textarea id="query" name="query" rows="2" required minlength="3" maxlength="12000" placeholder="О чём найти публикации?"></textarea>
-            <span class="query-shortcut" aria-hidden="true">Ctrl ↵</span>
+            <span class="query-shortcut" aria-hidden="true"></span>
           </div>
           
           <div class="examples">
@@ -180,7 +184,7 @@
             <button type="button" data-example="развитие туризма">Развитие туризма</button>
           </div>
           
-          <p class="hint" id="mode-hint">Слова могут стоять в разных частях новости. Проверяем смысл по оригиналу. Для точной фразы используйте кавычки.</p>
+          <p class="hint" id="mode-hint">Слова могут стоять в разных частях новости. Проверяем смысл по оригиналу.</p>
           
           <div class="filters-grid">
             <fieldset class="date-field">
@@ -398,25 +402,25 @@
         </div>
         
         <div class="help-layout">
-          <article class="help-content">
+          <article style="padding-bottom: 40px; margin-bottom: 10px;" class="help-content">
             <h2>Задайте условия</h2>
-            <p>В режиме «Поиск по тезису» введите ключевые слова: например, «Аделинчики Саратов». Они могут стоять в разных частях текста; связь между ними проверяется по содержанию. Для непрерывной точной фразы заключите её в кавычки. В режиме «Сравнение с оригиналом» вставьте текст или публичную ссылку: увидите эталон, его краткое изложение и материалы о другом событии на ту же тему. Выберите период, регион и при необходимости город.</p>
+            <p>В режиме «Поиск по тезису» введите ключевые слова. Они могут стоять в разных частях текста; связь между ними проверяется по содержанию. В режиме «Сравнение с оригиналом» вставьте текст - увидите эталон, его краткое изложение и материалы о этом событии на ту же тему. Выберите период, регион и при необходимости город.</p>
             
             <h2>Определите область поиска</h2>
             <p>Расширенный поиск использует индекс Яндекса и не ограничивается вашим списком. Режим «По моим источникам» ищет только по выбранным адресам. В обоих случаях закрытые, неиндексируемые и динамические страницы могут быть недоступны.</p>
             
             <h2>Проверьте оригиналы</h2>
-            <p>Нажмите на публикацию, чтобы увидеть сохранённый текст, объяснение отбора и цитату. Модель сопоставляет содержание с запросом и регионом. Эмоция, стиль и объяснения отображаются рядом с результатом. Это анализ текста, а не независимая проверка истинности утверждений.</p>
+            <p>Нажмите на публикацию, чтобы увидеть сохранённый текст, объяснение отбора и цитату. Модель сопоставляет содержание с запросом и регионом. Эмоция, стиль и объяснения отображаются рядом с результатом (если они доступны)</p>
             
             <div class="status-explanation">
-              <span class="badge relevant">Связанные</span>
+              <span style="margin-bottom: 7px;" class="badge relevant">Связанные</span>
               <p>Получен текст, модель установила связь и привела проверяемую цитату. Если дата неизвестна, это отмечено отдельно; такой материал не выбирается автоматически.</p>
               
-              <span class="badge review">Неоднозначное</span>
+              <span style="margin-bottom: 7px;" class="badge review">Неоднозначное</span>
               <p>Оригинал недоступен или есть сомнения в связи с запросом. Ссылки соцсетей с недоступным оригиналом показаны в общей подборке с соответствующей пометкой. Такие материалы не выбираются автоматически.</p>
               
               <span class="badge indirect">Косвенно</span>
-              <p>Ключевые слова найдены, но тема затронута лишь косвенно. Материалы без совпадения или вне периода отбрасываются.</p>
+              <p>Практически не используется т.к схожесть будет только по названию, что не пройдет проверку</p>
             </div>
             
             <h2>Соберите файл</h2>
@@ -425,27 +429,11 @@
             <h2>Как считаются размещения</h2>
             <p>Одинаковая новость в трёх источниках — три размещения. Повтор одной нормализованной ссылки не увеличивает счётчик. Тексты сохраняются на момент получения и не заменяются пересказом модели.</p>
           </article>
-          
-          <aside class="help-aside">
-            <h3>Подключение сервисов</h3>
-            <div id="service-status"></div>
-            <p>Настройку выполняет разработчик в файле .env на сервере. Секретные ключи не передаются в браузер.</p>
-            
-            <h3>Ваше пространство</h3>
-            <p>История и источники связаны с этим браузером. После очистки cookies или перехода на другое устройство доступ к прежнему пространству не сохраняется.</p>
-            
-            <h3>Границы поиска</h3>
-            <p id="limits-text"></p>
-            <p>Доступ к API VK, ОК и MAX напрямую не подключён: обнаружение идёт через Яндекс, чтение — через публичные страницы. Полнота покрытия не гарантируется.</p>
-          </aside>
         </div>
       </section>
 
       <!-- Подвал страницы -->
-      <footer class="app-footer">
-        <span>Медиаподборка</span>
-        <span>От информации — к проверяемому результату</span>
-      </footer>
+      <footer style="height: 10px;" class="app-footer"></footer>
     </main>
   </div>
 

@@ -1,0 +1,659 @@
+/* ==========================================================================
+   1. ПЕРЕМЕННЫЕ И ТЕМЫ (СВЕТЛАЯ / ТЕМНАЯ)
+   ========================================================================== */
+   :root {
+    --blue: #24548b;
+    --blue-soft: #eaf2fc;
+    --on-red: #fff;
+    --neutral-soft: #f0edef;
+    color-scheme: light;
+  }
+  
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --red: #ff919b;
+    --red-hover: #ffb1b8;
+    --red-soft: #3b2028;
+    --ink: #f4eef1;
+    --muted: #c0b5bf;
+    --border: #514650;
+    --ground: #19171c;
+    --white: #242127;
+    --green: #91dbb1;
+    --green-soft: #183729;
+    --amber: #f1cd81;
+    --amber-soft: #3c301a;
+    --blue: #a4c9ff;
+    --blue-soft: #20324a;
+    --on-red: #351018;
+    --neutral-soft: #312c34;
+    --shadow: 0 16px 50px #0008;
+  }
+  
+  /* Масштабирование интерфейса по атрибуту */
+  html[data-scale="80"] { font-size: 80%; }
+  html[data-scale="90"] { font-size: 90%; }
+  html[data-scale="100"] { font-size: 100%; }
+  html[data-scale="110"] { font-size: 110%; }
+  html[data-scale="120"] { font-size: 120%; }
+  html[data-scale="130"] { font-size: 130%; }
+  html[data-scale="140"] { font-size: 140%; }
+  html[data-scale="150"] { font-size: 150%; }
+  
+  /* ==========================================================================
+     2. БАЗОВЫЕ ПРАВИЛА И ТИПОГРАФИКА
+     ========================================================================== */
+  body {
+    font-size: .875rem;
+  }
+  
+  input, select, textarea, button {
+    font-family: inherit;
+    caret-color: var(--red);
+  }
+  
+  ::selection {
+    background: var(--red);
+    color: var(--on-red);
+  }
+  
+  :focus-visible {
+    outline: 3px solid var(--red);
+    outline-offset: 3px;
+  }
+  
+  /* ==========================================================================
+     3. ВЕРХНЯЯ ПАНЕЛЬ И ЭЛЕМЕНТЫ УПРАВЛЕНИЯ
+     ========================================================================== */
+  .topbar {
+    height: auto;
+    min-height: 72px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    gap: 12px;
+  }
+  
+  .appearance-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: .8125rem;
+  }
+  
+  .appearance-controls select,
+  .appearance-controls button {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--ink);
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: .8125rem;
+  }
+  
+  .appearance-controls output {
+    font-variant-numeric: tabular-nums;
+    min-width: 3.5em;
+    text-align: center;
+  }
+  
+  .appearance-controls button:disabled {
+    opacity: .5;
+  }
+  
+  /* ==========================================================================
+     4. ПАНЕЛЬ ПОИСКА И ФИЛЬТРЫ
+     ========================================================================== */
+  .search-bottom {
+    flex-wrap: wrap;
+    align-items: end;
+  }
+  
+  .region-field {
+    flex: 1;
+    min-width: 140px;
+  }
+  
+  .region-field input {
+    width: 100%;
+    font-size: .875rem;
+    height: auto;
+    min-height: 35px;
+    padding: 5px 0;
+  }
+  
+  .region-field small {
+    font-size: .75rem;
+  }
+  
+  .mode-control select {
+    height: auto;
+    min-height: 35px;
+    font-size: .875rem;
+    max-width: 100%;
+  }
+  
+  .search-panel > .hint {
+    margin: 0 0 20px;
+  }
+  
+  .search-panel > #region-hint {
+    margin: 14px 0 0;
+  }
+  
+  .extra-filters {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    font-size: .875rem;
+  }
+  
+  .extra-filters label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .fresh-control span {
+    font-size: .8125rem;
+    color: var(--muted);
+  }
+  
+  .fresh-control input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--red);
+  }
+  
+  #result-limit {
+    width: 85px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--ink);
+    font-size: 1rem;
+  }
+  
+  .filters-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  }
+  
+  .date-range input {
+    font-size: .875rem;
+  }
+  
+  .platforms label {
+    font-size: .8125rem;
+  }
+  
+  .button {
+    white-space: normal;
+  }
+  
+  .segmented {
+    flex-wrap: wrap;
+  }
+  
+  .segmented button {
+    font-size: .8125rem;
+    white-space: normal;
+  }
+  
+  .form-topline {
+    align-items: start;
+    flex-wrap: wrap;
+  }
+  
+  .quiet-caption {
+    font-size: .75rem;
+  }
+  
+  /* ==========================================================================
+     5. РЕЗУЛЬТАТЫ И СРАВНЕНИЕ
+     ========================================================================== */
+  .result-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .result-tabs button {
+    font-size: .8125rem;
+  }
+  
+  .results-heading {
+    flex-wrap: wrap;
+  }
+  
+  .results-heading h2 {
+    flex-wrap: wrap;
+  }
+  
+  .comparison-panel {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 0;
+    margin: 20px 0;
+  }
+  
+  .comparison-panel h3 {
+    font-size: 1.125rem;
+  }
+  
+  .comparison-panel h4 {
+    font-size: .9375rem;
+    margin: 22px 0 10px;
+  }
+  
+  .reference-summary {
+    font-size: .9375rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    max-width: 75ch;
+  }
+  
+  .comparison-panel .original-text {
+    max-height: none;
+  }
+  
+  .comparison-panel details {
+    margin-top: 8px;
+  }
+  
+  .comparison-panel svg {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .text-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+  }
+  
+  .text-label {
+    background: var(--neutral-soft);
+    color: var(--ink);
+  }
+  
+  .badge {
+    white-space: normal;
+    font-size: .75rem;
+  }
+  
+  .badge.indirect {
+    color: var(--blue);
+    background: var(--blue-soft);
+  }
+  
+  .badge.fresh {
+    color: var(--green);
+    background: var(--green-soft);
+    margin-top: 6px;
+  }
+  
+  .analysis-explanation {
+    font-size: .8125rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin: 8px 0 0;
+  }
+  
+  .result-reason,
+  .difference {
+    font-size: .875rem;
+    line-height: 1.7;
+    margin-top: 10px;
+  }
+  
+  .relevance-block {
+    margin-top: 24px;
+  }
+  
+  .relevance-block > h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+  }
+  
+  .relevance-block > h3 span {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .relevance-block.relevant > h3 {
+    color: var(--green);
+    background: var(--green-soft);
+  }
+  
+  .relevance-block.indirect > h3 {
+    color: var(--blue);
+    background: var(--blue-soft);
+  }
+  
+  .relevance-block.review > h3 {
+    color: var(--amber);
+    background: var(--amber-soft);
+  }
+  
+  .publication-row {
+    grid-template-columns: 24px minmax(0, 1fr) minmax(100px, 145px);
+  }
+  
+  .publication-row > * {
+    min-width: 0;
+  }
+  
+  .publication-title,
+  .publication-row p {
+    overflow-wrap: anywhere;
+  }
+  
+  .publication-excerpt {
+    display: block;
+    overflow: visible;
+    font-size: .875rem;
+  }
+  
+  .publication-meta,
+  .publication-side time,
+  .publication-side a {
+    font-size: .8125rem;
+  }
+  
+  /* ==========================================================================
+     6. ИСТОЧНИКИ И ИСТОРИЯ
+     ========================================================================== */
+  .source-group {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
+  .source-group > summary {
+    padding: 16px;
+    font-size: .875rem;
+    overflow-wrap: anywhere;
+  }
+  
+  .source-group > summary span {
+    color: var(--muted);
+    display: block;
+    margin-top: 5px;
+    font-size: .8125rem;
+  }
+  
+  .source-group[open] > summary span {
+    display: none;
+  }
+  
+  .source-group .publication-list {
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .source-group blockquote {
+    margin: 8px 0;
+  }
+  
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  
+  .empty-state > p {
+    font-size: .875rem;
+  }
+  
+  .history-row .history-repeat {
+    font-size: .8125rem;
+    color: var(--red);
+    margin-top: 12px;
+    padding: 8px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  
+  .workspace strong {
+    overflow-wrap: anywhere;
+  }
+  
+  .run-context {
+    font-size: .875rem;
+  }
+  
+  .run-context small {
+    font-size: .8125rem;
+  }
+  
+  .hint {
+    font-size: .8125rem;
+  }
+  
+  /* ==========================================================================
+     7. ЦВЕТОВЫЕ ПЕРЕОПРЕДЕЛЕНИЯ И СОСТОЯНИЯ
+     ========================================================================== */
+  .button.primary {
+    color: var(--on-red);
+  }
+  
+  .button.secondary {
+    color: var(--ink);
+  }
+  
+  .button.secondary:hover:not(:disabled) {
+    background: var(--neutral-soft);
+  }
+  
+  .run-context,
+  .badge.irrelevant,
+  .count-badge,
+  .workspace-symbol,
+  .nav-count {
+    background: var(--neutral-soft);
+    color: var(--ink);
+  }
+  
+  .query-wrap textarea::placeholder,
+  .query-shortcut,
+  .examples button,
+  .nav-item,
+  .workspace small,
+  .agency,
+  .help-content p,
+  .empty-steps,
+  .app-footer {
+    color: var(--muted);
+  }
+  
+  .nav-item.active {
+    color: var(--red);
+  }
+  
+  .toast {
+    background: var(--ink);
+    color: var(--ground);
+  }
+  
+  .original-text mark {
+    background: var(--red-soft);
+    color: var(--ink);
+  }
+  
+  input::placeholder {
+    color: var(--muted);
+  }
+  
+  /* Платформы в темной теме */
+  :root[data-theme="dark"] .platform-dot {
+    background: var(--neutral-soft);
+    color: var(--ink);
+  }
+  
+  :root[data-theme="dark"] .platform-dot.vk {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+  
+  :root[data-theme="dark"] .platform-dot.ok {
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+  
+  :root[data-theme="dark"] .platform-dot.max {
+    background: #342b50;
+    color: #d1baff;
+  }
+  
+  * {
+    scrollbar-color: var(--muted) transparent;
+  }
+  
+  .query-wrap {
+    border-color: var(--border);
+  }
+  
+  .rejected-links {
+    padding-left: 22px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+  
+  .rejected-links li {
+    margin: 14px 0;
+    font-size: .875rem;
+  }
+  
+  .rejected-links p {
+    font-size: .8125rem;
+  }
+  
+  #coverage-content h3 {
+    margin-top: 20px;
+  }
+  
+  /* ==========================================================================
+     8. АДАПТИВНЫЙ ДИЗАЙН (MEDIA QUERIES)
+     ========================================================================== */
+  @media (max-width: 760px) {
+    .appearance-controls {
+      width: 100%;
+    }
+    .publication-row {
+      grid-template-columns: 20px minmax(0, 1fr);
+    }
+    .publication-side {
+      flex-wrap: wrap;
+    }
+    .search-bottom > * {
+      max-width: 100%;
+    }
+    .region-field {
+      flex-basis: 100%;
+    }
+    .source-form input {
+      font-size: 1rem;
+    }
+    .query-wrap textarea {
+      font-size: 1rem;
+    }
+    .results-filter input {
+      width: 100%;
+      font-size: 1rem;
+    }
+    .history-row {
+      grid-template-columns: 1fr;
+    }
+    .history-row .badge {
+      justify-self: start;
+    }
+    .empty-actions > .button {
+      flex: 1 1 200px;
+    }
+    .topbar {
+      min-height: 80px;
+    }
+  }
+  
+  @media (max-width: 500px) {
+    .segmented button {
+      font-size: .8125rem;
+    }
+    .breadcrumb {
+      font-size: .75rem;
+    }
+    .appearance-controls {
+      gap: 6px;
+    }
+    .appearance-controls select {
+      max-width: 130px;
+    }
+    .appearance-controls > label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    .appearance-controls select,
+    .appearance-controls button {
+      padding: 6px;
+      font-size: .75rem;
+    }
+    .appearance-controls output {
+      min-width: 3em;
+      font-size: .75rem;
+    }
+    .results-heading p {
+      font-size: .8125rem;
+    }
+    .results-heading h2 {
+      font-size: 1.125rem;
+    }
+    .publication-title {
+      font-size: 1rem;
+    }
+    .results-heading .button {
+      font-size: .8125rem;
+    }
+    .page-heading p {
+      font-size: .875rem;
+    }
+    .button {
+      font-size: .875rem;
+    }
+    .date-range {
+      flex-wrap: wrap;
+    }
+    .date-range input {
+      flex: 1 1 100px;
+    }
+    .empty-state h3 {
+      font-size: 1rem;
+    }
+    .extra-filters {
+      gap: 14px;
+    }
+    .platforms label {
+      font-size: .8125rem;
+    }
+    .source-row-content a {
+      font-size: .8125rem;
+    }
+    .form-actions {
+      flex-wrap: wrap;
+    }
+  }
+  

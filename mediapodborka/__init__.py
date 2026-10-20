@@ -13,12 +13,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from werkzeug.exceptions import HTTPException
 
-from .content import normalize_url, platform_for
-from .db import connect, initialize, now
-from .jobs import JobRunner
-from .locations import DEFAULT_REGION, registry, validate_location
-from .filters import fresh_at, result_groups
-from .matching import TOKEN
+from .functions.content import normalize_url, platform_for
+from .database.db import connect, initialize, now
+from .functions.jobs import JobRunner
+from .functions.locations import DEFAULT_REGION, registry, validate_location
+from .functions.filters import fresh_at, result_groups
+from .functions.matching import TOKEN
 
 # Корень проекта (папка выше пакета mediapodborka)
 ROOT = Path(__file__).resolve().parent.parent

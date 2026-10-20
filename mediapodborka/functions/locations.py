@@ -38,7 +38,7 @@ def registry():
         'АО': 'автономный округ',
         'Аобл': 'автономная область',
     }
-    put = Path(__file__).with_name('data').joinpath('cities.csv')
+    put = Path(__file__).resolve().parent.parent / 'data' / 'cities.csv'
     with put.open(encoding='utf-8-sig', newline='') as fayl:
         for stroka in csv.DictReader(fayl):
             region = stroka['region']
